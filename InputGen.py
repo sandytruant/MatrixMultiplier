@@ -12,15 +12,15 @@ def number_to_hex(number):
     return hex(number)[2:].zfill(2)
 
 # create a signed INT8 numpy array with sparsity of 15% and shape of (1000, 1000)
-shape = (512, 512)
+shape = (1024, 512)
 array = np.random.randint(0, 256, size=shape).astype(np.int8)
 # set values to 0 with 10% probability
 array[np.random.rand(*shape) < sparsity] = 0
 print(array)
 
-f = open("input_mem.csv", "w")
-for i in range(512):
-    for j in range(64):# 512/8
-        for k in range(8):
-            f.write(f"{number_to_hex(array[i][8*j+k])}")
-        f.write("\n")
+with open("input_mem.csv", "w") as f:
+    for i in range(1024):
+        for j in range(64):# 512/8
+            for k in range(8):
+                f.write(f"{number_to_hex(array[i][8*j+k])}")
+            f.write("\n")

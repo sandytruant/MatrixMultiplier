@@ -11,11 +11,11 @@ reg clk = 0;
 always #(`T/2) clk = ~clk;
 reg comp_enb;
 
-wire [3:0] mem_addr;
+wire [15:0] mem_addr;
 wire [63:0] mem_data;
 wire mem_read_enb;
 wire mem_write_enb;
-wire [3:0] res_addr;
+wire [15:0] res_addr;
 wire [63:0] res_data;
 wire busyb, done;
 initial
@@ -37,7 +37,7 @@ accelerator u_accelerator (
 ,.done          (done)
 );
 
-ram #(.DATA_WIDTH(64), .ADDR_WIDTH(4)) u_input_mem (
+ram #(.DATA_WIDTH(64), .ADDR_WIDTH(16)) u_input_mem (
  .clk       (clk)
 ,.web       (~mem_read_enb)
 ,.address   (mem_addr)
@@ -46,7 +46,7 @@ ram #(.DATA_WIDTH(64), .ADDR_WIDTH(4)) u_input_mem (
 ,.cs        (1'b1)
 );
 
-ram #(.DATA_WIDTH(64), .ADDR_WIDTH(4)) u_res_mem (
+ram #(.DATA_WIDTH(64), .ADDR_WIDTH(16)) u_res_mem (
  .clk       (clk)
 ,.web       (mem_write_enb)
 ,.address   (res_addr)
@@ -66,7 +66,7 @@ initial begin
     #(10*`T) begin
         // readout result_memory content to "result_mem.csv"
         file1=$fopen("result_mem.csv","w");
-        for(i=0;i<(1<<4);i++)
+        for(i=0;i<(1<<16);i++)
             $fwrite( file1 , "%8h\n" , u_res_mem.mem[i]);
         $fclose(file1);
         $finish; 

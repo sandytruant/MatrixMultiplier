@@ -9,11 +9,11 @@ module accelerator (
 
     input clk;
     input comp_enb;
-    output reg [3:0] mem_addr;
+    output reg [15:0] mem_addr;
     input [63:0] mem_data;
     output reg mem_read_enb;
     output reg mem_write_enb;
-    output reg [3:0] res_addr;
+    output reg [15:0] res_addr;
     output reg [63:0] res_data;
     output reg busyb;
     output reg done;
