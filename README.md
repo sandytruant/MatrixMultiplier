@@ -15,7 +15,7 @@ $512 \times 512 \times 8bit=2Mb$
 - Output memory(u_res_mem in testbench_top.v): 
 
 ## PE Usage
-When done is true, then read the next data from SRAM/DFF.
+When done is true, read the next data from SRAM/DFF.
 ```Verilog
 always @(posedge clk) begin
     if (done) begin
