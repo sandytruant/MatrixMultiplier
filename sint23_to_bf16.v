@@ -1,4 +1,5 @@
 module Sint23ToBF16(
+    input wire clk,
     input wire en,
     input wire [22:0] sint_in,
     output [15:0] bf16_out
@@ -13,7 +14,7 @@ reg found;
 
 assign bf16_out = {sign, exponent, mantissa};
 
-always @(*) begin
+always @(posedge clk) begin
     if (en) begin
         sign = sint_in[22];
         if (sign == 1'b1) begin
