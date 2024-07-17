@@ -13,5 +13,14 @@ $DataWidth = 64, AddrWidth = 16; 64 \times 2^{16} = 4Mb$
 - Size:
 $512 \times 512 \times 8bit=2Mb$
 - Output memory(u_res_mem in testbench_top.v): 
-## TODO
-1. 
+
+## PE Usage
+When done is true, then read the next data from SRAM/DFF.
+```Verilog
+always @(posedge clk) begin
+    if (done) begin
+        in_data1 <= next_data1;
+        in_data2 <= next_data2;
+    end
+end
+```
