@@ -29,8 +29,8 @@ always @(posedge clk) begin
                 if (ready) begin
                     state <= CALC;
                     data2_addr <= 4'b0;
-                    temp1 <= $signed(in_data1);
-                    temp2 <= $signed(in_data2);
+                    temp1 <= in_data1;
+                    temp2 <= in_data2;
                     temp3 <= 16'b0;
                 end
             end
@@ -38,7 +38,7 @@ always @(posedge clk) begin
                 if (data2_addr == 8) begin
                     state <= DONE1;
                     done <= 1'b1;
-                    result <= result + $signed(temp3);
+                    result <= result + temp3;
                     out_data1 <= in_data1;
                     out_data2 <= in_data2;
                 end
@@ -58,7 +58,7 @@ always @(posedge clk) begin
                 state <= DONE2;
                 done <= 0;
             end
-            DONE2: begin
+            default: begin // DONE2
                 state <= IDLE;
             end
         endcase
