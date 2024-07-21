@@ -1,34 +1,34 @@
 `include "processing_element.v"
 
-module SystolicArray(
+module systolic_array (
     input clk,
     input rst,
     input ready,
-    input [3:0] addr1, // 读取结果的地址
-    input [3:0] addr2, // 读取结果的地址
+    input [4:0] addr1,  // 读取结果的地址
+    input [3:0] addr2,  // 读取结果的地址
     input signed [127:0] data1,
     input signed [127:0] data2,
     output all_done,
-    output signed [22:0] dout
+    output signed [23:0] dout
 );
 
-    wire signed [7:0] actual_data1 [0:15];
-    wire signed [7:0] actual_data2 [0:15];
+    wire signed [7:0] actual_data1[15:0];
+    wire signed [7:0] actual_data2[15:0];
 
     // 中间连线
-    reg signed [7:0] in_data1 [0:15][0:15];
-    reg signed [7:0] in_data2 [0:15][0:15];
-    wire signed [7:0] out_data1 [0:15][0:15];
-    wire signed [7:0] out_data2 [0:15][0:15];
-    wire signed [22:0] result [0:15][0:15];
-    wire done [0:15][0:15];
+    reg signed [7:0] in_data1[15:0][15:0];
+    reg signed [7:0] in_data2[15:0][15:0];
+    wire signed [7:0] out_data1[15:0][15:0];
+    wire signed [7:0] out_data2[15:0][15:0];
+    wire signed [23:0] result[15:0][15:0];
+    wire done[15:0][15:0];
 
     // 行列生成
     genvar i, j;
     generate
-        for (i = 0; i < 16; i = i + 1) begin : row
-            for (j = 0; j < 16; j = j + 1) begin : col
-                ProcessingElement pe_inst (
+        for (i = 0; i < 16; i = i + 1) begin : g_row
+            for (j = 0; j < 16; j = j + 1) begin : g_col
+                processing_element pe_inst (
                     .clk(clk),
                     .rst(rst),
                     .ready(ready),
@@ -44,9 +44,9 @@ module SystolicArray(
     endgenerate
 
     generate
-        for (i = 0; i < 16; i = i + 1) begin
-            assign actual_data1[i] = data1[8 * i +: 8];
-            assign actual_data2[i] = data2[8 * i +: 8];
+        for (i = 0; i < 16; i = i + 1) begin : g_data
+            assign actual_data1[i] = data1[8*i+:8];
+            assign actual_data2[i] = data2[8*i+:8];
         end
     endgenerate
 
@@ -60,8 +60,7 @@ module SystolicArray(
                     in_data2[k][l] <= 0;
                 end
             end
-        end
-        else begin
+        end else begin
             if (done[0][0]) begin
                 in_data1[0][0] <= actual_data1[0];
                 in_data2[0][0] <= actual_data2[0];
@@ -69,18 +68,18 @@ module SystolicArray(
             for (k = 1; k < 16; k = k + 1) begin
                 if (done[k][0]) begin
                     in_data1[k][0] <= actual_data1[k];
-                    in_data2[k][0] <= out_data2[k - 1][0];
+                    in_data2[k][0] <= out_data2[k-1][0];
                 end
                 if (done[0][k]) begin
                     in_data2[0][k] <= actual_data2[k];
-                    in_data1[0][k] <= out_data1[0][k - 1];
+                    in_data1[0][k] <= out_data1[0][k-1];
                 end
             end
             for (k = 1; k < 16; k = k + 1) begin
                 for (l = 1; l < 16; l = l + 1) begin
                     if (done[k][l]) begin
-                        in_data1[k][l] <= out_data1[k][l - 1];
-                        in_data2[k][l] <= out_data2[k - 1][l];
+                        in_data1[k][l] <= out_data1[k][l-1];
+                        in_data2[k][l] <= out_data2[k-1][l];
                     end
                 end
             end

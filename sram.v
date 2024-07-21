@@ -7,7 +7,7 @@ module SRAM (
 );
 
     // Declare memory array
-    reg [127:0] memory [0:1023];  // 543 locations of 8-bit wide memory
+    reg [127:0] memory [0:1023];
 
     always @(posedge clk) begin
         if (we) begin

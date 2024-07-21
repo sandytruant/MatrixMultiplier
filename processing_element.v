@@ -1,10 +1,10 @@
-module ProcessingElement(
+module processing_element (
     input wire clk,
     input wire rst,
     input wire signed [7:0] in_data1,
     input wire signed [7:0] in_data2,
     input wire ready,
-    output reg signed [22:0] result,
+    output reg signed [23:0] result,
     output reg done,
     output reg [7:0] out_data1,
     output reg [7:0] out_data2
@@ -20,10 +20,9 @@ module ProcessingElement(
 
     always @(posedge clk) begin
         if (rst) begin
-            state <= IDLE;
-            result <= 23'b0;
-        end
-        else begin
+            state  <= IDLE;
+            result <= 24'b0;
+        end else begin
             case (state)
                 IDLE: begin
                     if (ready) begin
@@ -41,13 +40,11 @@ module ProcessingElement(
                         result <= result + temp3;
                         out_data1 <= in_data1;
                         out_data2 <= in_data2;
-                    end
-                    else begin
+                    end else begin
                         if (temp2[data2_addr]) begin
                             if (data2_addr == 7) begin
                                 temp3 <= temp3 - (temp1 <<< data2_addr);
-                            end
-                            else begin
+                            end else begin
                                 temp3 <= temp3 + (temp1 <<< data2_addr);
                             end
                         end
@@ -56,9 +53,9 @@ module ProcessingElement(
                 end
                 DONE1: begin
                     state <= DONE2;
-                    done <= 0;
+                    done  <= 0;
                 end
-                default: begin // DONE2
+                default: begin  // DONE2
                     state <= IDLE;
                 end
             endcase
