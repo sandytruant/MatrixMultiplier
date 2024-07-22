@@ -1,26 +1,20 @@
-# MatrixMultiplier
+# Matrix Multiplying Accelerator
 
-## IO
-1. Input:
-- Size:
-$2 \times 512 \times 512 \times 8bit=4194304bits=4Mb$
-- Input file(input_mem.csv):
-$65536 rows \times 8integers \times 8bits=65536 rows \times 16 hexes = 4Mb$
-- Input memory(u_input_mem in testbench_top.v):
-$DataWidth = 64, AddrWidth = 16; 64 \times 2^{16} = 4Mb$ 
-- So 1 data in memory contains 8 integers, i.e. 1 row in input_mem.csv
-2. Output:
-- Size:
-$512 \times 512 \times 8bit=2Mb$
-- Output memory(u_res_mem in testbench_top.v): 
+This is a chip design for accelerating matrix multiplying (matrix shape is 512 * 512).
 
-## PE Usage
-When done is true, read the next data from SRAM/DFF.
-```Verilog
-always @(posedge clk) begin
-    if (done) begin
-        in_data1 <= next_data1;
-        in_data2 <= next_data2;
-    end
-end
+## Usage
+
+- Generate 2 random input matrixes. This will generate input_mem.csv.
+```Bash
+python InputGen.py
 ```
+
+- Simulate. This will genetare 3 files: wave, wave.vcd, result_mem.csv.
+```Bash
+iverilog -o wave testbench_top.v
+vvp -n wave
+```
+
+- Check the result.
+```Bash
+python CheckResult.py

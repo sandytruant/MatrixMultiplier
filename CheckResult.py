@@ -67,12 +67,13 @@ def main():
     a2 = array[512:1024,:]
 
     # get computed results from Verilog
-    correct_result = np.matrix(a1).astype(int)*np.matrix(a2).astype(int)
+    correct_result = np.matrix(a1).astype(np.int64)*np.matrix(a2).astype(np.int64)
     print(f"a1:\n{a1}\na2:\n{a2}\ncorrect_result:\n{correct_result}")
 
     # check results is correct
     # result_array = np.zeros((512,512)) #tmp，请换成你的结果(下一行代码)
     result_array = read_result_mem(fileName = "result_mem.csv")
+    print(f"my_result:\n{result_array}")
         
     loss = np.sum(np.square(correct_result-result_array)) #mean-square error
     relative_loss = np.sum(np.square(correct_result-result_array))/np.sum(np.square(correct_result)) #relative mean-square error

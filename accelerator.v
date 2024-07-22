@@ -12,16 +12,7 @@ module accelerator (
     res_addr,
     res_data,
     busyb,
-    done,
-    state,
-    counter1,
-    counter2,
-    sram_addr2,
-    col,
-    bf_out,
-    dout_systolic_array,
-    addr1_systolic_array,
-    addr2_systolic_array,
+    done
 );
 
     integer i;
@@ -37,10 +28,10 @@ module accelerator (
     output reg busyb;
     output reg done;
 
-    output reg [5:0] counter1; // 矩阵1的计数器
-    output reg [4:0] counter2; // 矩阵2的计数器
+    reg [5:0] counter1; // 矩阵1的计数器
+    reg [4:0] counter2; // 矩阵2的计数器
     reg [9:0] sram_addr1;
-    output reg [9:0] sram_addr2;
+    reg [9:0] sram_addr2;
     reg sram_we;
     reg [127:0] sram_din1;
     reg [127:0] sram_din2;
@@ -48,24 +39,24 @@ module accelerator (
     wire [127:0] sram_dout2;
 
     reg [3:0] row; // sram的行计数器
-    output reg [3:0] col; // sram的列计数器
+    reg [3:0] col; // sram的列计数器
 
     reg rst_systolic_array;
     reg ready_systolic_array;
-    output reg [4:0] addr1_systolic_array;
-    output reg [3:0] addr2_systolic_array;
+    reg [4:0] addr1_systolic_array;
+    reg [3:0] addr2_systolic_array;
     reg signed [127:0] data1_systolic_array;
     reg signed [127:0] data2_systolic_array;
     wire all_done_systolic_array;
-    output wire signed [23:0] dout_systolic_array;
+    wire signed [23:0] dout_systolic_array;
 
-    output wire [15:0] bf_out;
+    wire [15:0] bf_out;
     reg [63:0] res_temp;
 
     // Declare states
     parameter S_RST = 0, S_READ1 = 1, S_READ2 = 2, S_WORK = 3, S_WRITE = 4, S_DONE = 5;
-    output reg [2:0] state;
-    reg read_state;
+    reg [2:0] state;
+    reg [1:0] read_state;
     // Determine the next state synchronously, based on the
     // current state and the input
     always @(posedge clk) begin
@@ -106,6 +97,9 @@ module accelerator (
                         if (read_state == 0) begin
                             read_state <= 1;
                         end
+                        else if (read_state == 1) begin
+                            read_state <= 2;
+                        end
                         else begin
                            state <= S_READ2;
                             read_state <= 0; 
@@ -121,14 +115,16 @@ module accelerator (
                                 read_state <= 1;
                             end
                         end
-                        else begin
+                        else if (read_state == 1) begin
                             if (row >= sram_addr1 + 1 || (sram_addr1 >= 512 && row < sram_addr1 - 511)) begin
                                 sram_din1[8*row+:8] <= 0;
                             end
                             else begin
                                 sram_din1[8*row+:8] <= mem_data[8 * (7 - ((sram_addr1 - row) % 8))+:8];
                             end
-                            read_state <= 0;
+                            read_state <= 2;
+                        end                 
+                        else begin
                             if (row == 15) begin
                                 row <= 0;
                                 sram_addr1 <= sram_addr1 + 1;
@@ -136,13 +132,17 @@ module accelerator (
                             else begin
                                 row <= row + 1;
                             end
-                        end                        
+                            read_state <= 0;
+                        end       
                     end
                 end
                 S_READ2: begin
                     if (sram_addr2 == 550) begin
                         if (read_state == 0) begin
                             read_state <= 1;
+                        end
+                        else if (read_state == 1) begin
+                            read_state <= 2;
                         end
                         else begin
                             state <= S_WORK;
@@ -177,14 +177,16 @@ module accelerator (
                                 read_state <= 1;
                             end
                         end
-                        else begin
+                        else if (read_state == 1) begin
                             if (col >= sram_addr2 + 1 || (sram_addr2 >= 512 && col < sram_addr2 - 511)) begin
                                 sram_din2[8*col+:8] <= 0;
                             end
                             else begin
                                 sram_din2[8*col+:8] <= mem_data[8*(7 - (counter2 * 16 + col) % 8)+:8];
                             end
-                            read_state <= 0;
+                            read_state <= 2;
+                        end                 
+                        else begin
                             if (col == 15) begin
                                 col <= 0;
                                 sram_addr2 <= sram_addr2 + 1;
@@ -192,7 +194,8 @@ module accelerator (
                             else begin
                                 col <= col + 1;
                             end
-                        end                        
+                            read_state <= 0;
+                        end       
                     end  
                 end
                 S_WORK: begin

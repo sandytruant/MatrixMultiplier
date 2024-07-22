@@ -6,14 +6,8 @@ default:
 generate_input:
 	python InputGen.py
 
-verilator:
-	verilator -cc -trace --timing testbench_top.v -exe sim_main.cpp
-
 check_result:
 	python CheckResult.py
-
-verilator:
-	verilator -cc -trace --timing testbench_top.v -exe sim_main.cpp
 
 clean:
 	rm -f ./wave 
