@@ -29,7 +29,7 @@ always @(sint_in) begin
         for (i = 23; i >= 0 && !found; i = i - 1) begin
             if (abs_value[i] == 1'b1) begin
                 exponent = 8'd127 + i;  // 127是偏移值
-                for (j = i - 1; j >= 0; j = j - 1) begin
+                for (j = i - 1; j >= i - 7 && j >= 0; j = j - 1) begin
                     mantissa[j - i + 7] = abs_value[j];
                 end
                 found = 1'b1;
