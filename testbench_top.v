@@ -25,6 +25,10 @@ begin
     $dumpvars(0);
 end
 
+initial begin
+    $monitor("time=%d, mem_addr=%h, mem_data=%h, mem_read_enb=%b, mem_write_enb=%b, res_addr=%h, res_data=%h, busyb=%b, done=%b", $time, mem_addr, mem_data, mem_read_enb, mem_write_enb, res_addr, res_data, busyb, done);
+end
+
 accelerator u_accelerator (
  .clk           (clk)
 ,.comp_enb      (comp_enb)
