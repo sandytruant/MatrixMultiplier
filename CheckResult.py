@@ -23,35 +23,21 @@ def read_input_mem(fileName = "input_mem.csv", row=1024):
     # print('reading matrix:\n',array)
     return array
 
-
-def hex_to_bf16(hex_value):
-    int_value = int(hex_value, 16)
-    bin_value = f'{int_value:016b}'
-
-    sign = int(bin_value[0], 2)
-    exponent = int(bin_value[1:9], 2)
-    mantissa = int(bin_value[9:], 2)
-
-    if exponent == 0 and mantissa == 0:
-        return 0
-    elif exponent == 0 and mantissa != 0:
-        return (-1) ** sign * 2 ** (-127) * (mantissa / 2 ** 7)
-    elif exponent == 255 and mantissa == 0:
-        return (-1) ** sign * float('inf')
-    elif exponent == 255 and mantissa != 0:
-        return float('nan')
-    else:
-        return (-1) ** sign * 2 ** (exponent - 127) * (1 + mantissa / 2 ** 7)
+def hex_to_number_2(hex):
+    number = int(hex, 16)
+    if(number>2**31-1):
+        number = number - 2**32
+    return number
 
 def read_result_mem(fileName = "result_mem.csv"):
-    arrays = [[np.zeros((16, 16)) for _ in range(32)] for _ in range(32)]
+    arrays = [[np.zeros((16, 16)).astype(np.int64) for _ in range(32)] for _ in range(32)]
     with open(fileName, "r") as fp:
         for i in range(32):
             for j in range(32):
                 for k in range(256):
-                    hex_value = fp.read(4)
-                    arrays[i][j][k//16][k%16] = hex_to_bf16(hex_value)
-                    if k%4 == 3:
+                    hex_value = fp.read(8)
+                    arrays[i][j][k//16, k%16] = hex_to_number_2(hex_value)
+                    if k%2 == 1:
                         if fp.read(1) != '\n':
                             print("read error")
     array = np.block(arrays)
