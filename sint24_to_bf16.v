@@ -5,8 +5,8 @@ module sint24_to_bf16(
 
 reg sign;
 reg [23:0] abs_value;
-reg [7:0] exponent;
-reg [6:0] mantissa;
+reg [4:0] exponent;
+reg [9:0] mantissa;
 reg [23:0] result;
 integer i, j;
 reg found;
@@ -21,24 +21,24 @@ always @(sint_in) begin
         abs_value = sint_in;
     end
 
-    exponent = 8'b0;
-    mantissa = 7'b0;
+    exponent = 5'b0;
+    mantissa = 10'b0;
     found = 1'b0;
 
     if (abs_value != 24'b0) begin
         for (i = 23; i >= 0 && !found; i = i - 1) begin
             if (abs_value[i] == 1'b1) begin
-                exponent = 8'd127 + i;  // 127是偏移值
-                for (j = i - 1; j >= i - 7 && j >= 0; j = j - 1) begin
-                    mantissa[j - i + 7] = abs_value[j];
+                exponent = 5'd1 + i;
+                for (j = i - 1; j >= i - 10 && j >= 0; j = j - 1) begin
+                    mantissa[j - i + 10] = abs_value[j];
                 end
                 found = 1'b1;
             end
         end
     end
     else begin
-        exponent = 8'b0;
-        mantissa = 7'b0;
+        exponent = 5'b0;
+        mantissa = 10'b0;
     end
 
     result = {sign, exponent, mantissa};
