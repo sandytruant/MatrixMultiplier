@@ -15,7 +15,7 @@ wire [15:0] mem_addr;
 wire [63:0] mem_data;
 wire mem_read_enb;
 wire mem_write_enb;
-wire [15:0] res_addr;
+wire [16:0] res_addr;
 wire [63:0] res_data;
 wire busyb, done;
 
@@ -51,7 +51,7 @@ ram #(.DATA_WIDTH(64), .ADDR_WIDTH(16)) u_input_mem (
 ,.cs        (1'b1)
 );
 
-ram #(.DATA_WIDTH(64), .ADDR_WIDTH(16)) u_res_mem (
+ram #(.DATA_WIDTH(64), .ADDR_WIDTH(17)) u_res_mem (
  .clk       (clk)
 ,.web       (mem_write_enb)
 ,.address   (res_addr)
@@ -67,7 +67,7 @@ always @(posedge clk) begin
         #(`T * 10); // wait for 10 clock cycles
         // readout result_memory content to "result_mem.csv"
         file1=$fopen("result_mem.csv","w");
-        for(i=0;i<(1<<16);i++)
+        for(i=0;i<(1<<17);i++)
             $fwrite( file1 , "%8h\n" , u_res_mem.mem[i]);
         $fclose(file1);
         $finish; 

@@ -14,9 +14,12 @@ module processing_element (
 
     reg [1:0] state;
     reg [3:0] data2_addr;
-    reg signed [15:0] temp1;
-    reg signed [7:0] temp2;
+    reg [15:0] temp1;
+    reg [7:0] temp2;
     reg signed [15:0] temp3;
+
+    reg sign1;
+    reg sign2;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -28,8 +31,20 @@ module processing_element (
                     if (ready) begin
                         state <= CALC;
                         data2_addr <= 4'b0;
-                        temp1 <= in_data1;
-                        temp2 <= in_data2;
+                        if (in_data1[7]) begin
+                            temp1 <= ~in_data1 + 1;
+                            sign1 <= 1'b1;
+                        end else begin
+                            temp1 <= in_data1;
+                            sign1 <= 1'b0;
+                        end
+                        if (in_data2[7]) begin
+                            temp2 <= ~in_data2 + 1;
+                            sign2 <= 1'b1;
+                        end else begin
+                            temp2 <= in_data2;
+                            sign2 <= 1'b0;
+                        end
                         temp3 <= 16'b0;
                     end
                 end
@@ -37,16 +52,16 @@ module processing_element (
                     if (data2_addr == 8) begin
                         state <= DONE1;
                         done <= 1'b1;
-                        result <= result + temp3;
+                        if (sign1 == sign2) begin
+                            result <= result + temp3;
+                        end else begin
+                            result <= result - temp3;
+                        end
                         out_data1 <= in_data1;
                         out_data2 <= in_data2;
                     end else begin
                         if (temp2[data2_addr]) begin
-                            if (data2_addr == 7) begin
-                                temp3 <= temp3 - (temp1 <<< data2_addr);
-                            end else begin
-                                temp3 <= temp3 + (temp1 <<< data2_addr);
-                            end
+                            temp3 <= temp3 + (temp1 << data2_addr);
                         end
                         data2_addr <= data2_addr + 1;
                     end

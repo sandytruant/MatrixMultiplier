@@ -1,6 +1,5 @@
 `include "systolic_array.v"
 `include "sram.v"
-`include "sint24_to_bf16.v"
 
 module accelerator (
     clk,
@@ -23,7 +22,7 @@ module accelerator (
     input [63:0] mem_data;
     output reg mem_read_enb;
     output reg mem_write_enb;
-    output reg [15:0] res_addr;
+    output reg [16:0] res_addr;
     output reg [63:0] res_data;
     output reg busyb;
     output reg done;
@@ -32,7 +31,8 @@ module accelerator (
     reg [4:0] counter2; // 矩阵2的计数器
     reg [9:0] sram_addr1;
     reg [9:0] sram_addr2;
-    reg sram_we;
+    reg sram_we1;
+    reg sram_we2;
     reg [127:0] sram_din1;
     reg [127:0] sram_din2;
     wire [127:0] sram_dout1;
@@ -50,13 +50,16 @@ module accelerator (
     wire all_done_systolic_array;
     wire signed [23:0] dout_systolic_array;
 
-    wire [15:0] bf_out;
+    wire signed [31:0] sint32_out;
     reg [63:0] res_temp;
 
     // Declare states
     parameter S_RST = 0, S_READ1 = 1, S_READ2 = 2, S_WORK = 3, S_WRITE = 4, S_DONE = 5;
     reg [2:0] state;
     reg [1:0] read_state;
+
+    assign sint32_out = $signed(dout_systolic_array);
+
     // Determine the next state synchronously, based on the
     // current state and the input
     always @(posedge clk) begin
@@ -77,14 +80,15 @@ module accelerator (
                         if (counter2 == 0) begin
                             state <= S_READ1;
                             read_state <= 0;
+                            sram_we1 <= 1;
                         end
                         else begin
                             state <= S_READ2;
                             read_state <= 0;
+                            sram_we2 <= 1;
                         end
                         sram_addr1 <= 0;
                         sram_addr2 <= 0;
-                        sram_we <= 1;
                         sram_din1 <= 0;
                         sram_din2 <= 0;
                         mem_read_enb <= 0; // read from input memory
@@ -101,7 +105,9 @@ module accelerator (
                             read_state <= 2;
                         end
                         else begin
-                           state <= S_READ2;
+                            state <= S_READ2;
+                            sram_we1 <= 0;
+                            sram_we2 <= 1;
                             read_state <= 0; 
                         end
                     end
@@ -146,9 +152,7 @@ module accelerator (
                         end
                         else begin
                             state <= S_WORK;
-                            state <= S_WORK;
-                            mem_read_enb <= 1;
-                            sram_we <= 0;
+                            sram_we2 <= 0;
                             sram_addr1 <= 0;
                             sram_addr2 <= 0;
                             rst_systolic_array <= 1;
@@ -228,10 +232,10 @@ module accelerator (
                         end
                     end
                     else begin
-                        res_temp[16*(3-addr2_systolic_array%4)+:16] <= bf_out;
-                        if (addr2_systolic_array % 4 == 0) begin
-                            if (addr1_systolic_array == 0 && (addr2_systolic_array == 0 || addr2_systolic_array == 4)) begin
-                                res_addr <= 64 * (counter1 * 32 + counter2 - 1);
+                        res_temp[32*(1-addr2_systolic_array%2)+:32] <= sint32_out;
+                        if (addr2_systolic_array % 2 == 0) begin
+                            if (addr1_systolic_array == 0 && (addr2_systolic_array == 0 || addr2_systolic_array == 2)) begin
+                                res_addr <= 128 * (counter1 * 32 + counter2 - 1);
                             end
                             else begin
                                 res_addr <= res_addr + 1;
@@ -288,7 +292,7 @@ module accelerator (
 
     SRAM sram1 (
         .clk(clk),
-        .we(sram_we),
+        .we(sram_we1),
         .addr(sram_addr1),
         .din(sram_din1),
         .dout(sram_dout1)
@@ -296,7 +300,7 @@ module accelerator (
 
     SRAM sram2 (
         .clk(clk),
-        .we(sram_we),
+        .we(sram_we2),
         .addr(sram_addr2),
         .din(sram_din2),
         .dout(sram_dout2)
@@ -312,11 +316,6 @@ module accelerator (
         .data2(data2_systolic_array),
         .all_done(all_done_systolic_array),
         .dout(dout_systolic_array)
-    );
-
-    sint24_to_bf16 sint24_to_bf16 (
-        .sint_in(dout_systolic_array),
-        .bf16_out(bf_out)
     );
 
 endmodule
